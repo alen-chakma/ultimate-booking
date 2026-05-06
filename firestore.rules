@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(tenantId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/tenants/$(tenantId)) &&
+        get(/databases/$(database)/documents/tenants/$(tenantId)).data.ownerEmail == request.auth.token.email;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwnerOrAdmin(tenantId) {
+      return isOwner(tenantId) || isSuperAdmin();
+    }
+
+    function isValidBookingStatus(status) {
+      return status in ['pending', 'confirmed', 'cancelled', 'completed'];
+    }
+
+    // ─── Users ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // ─── Tenants ────────────────────────────────────────────────────────────
+    match /tenants/{tenantId} {
+      allow read: if true; // Public - anyone can view business info
+      allow create: if isSignedIn();
+      allow update: if isOwnerOrAdmin(tenantId);
+      allow delete: if isSuperAdmin();
+
+      // ─── Amenities ──────────────────────────────────────────────────────
+      match /amenities/{amenityId} {
+        allow read: if true;
+        allow write: if isOwnerOrAdmin(tenantId);
+      }
+
+      // ─── Resources ──────────────────────────────────────────────────────
+      match /resources/{resourceId} {
+        allow read: if true;
+        allow write: if isOwnerOrAdmin(tenantId);
+      }
+
+      // ─── Inventories ────────────────────────────────────────────────────
+      match /inventories/{inventoryId} {
+        allow read: if true;
+        allow write: if isOwnerOrAdmin(tenantId);
+      }
+
+      // ─── Services ───────────────────────────────────────────────────────
+      match /services/{serviceId} {
+        allow read: if true;
+        allow write: if isOwnerOrAdmin(tenantId);
+
+        // ─── ServiceSlots ─────────────────────────────────────────────────
+        match /serviceSlots/{slotId} {
+          allow read: if true;
+          allow write: if isOwnerOrAdmin(tenantId);
+        }
+      }
+
+      // ─── Bookings ───────────────────────────────────────────────────────
+      match /bookings/{bookingId} {
+        allow read: if isSignedIn() &&
+          (resource.data.userId == request.auth.uid || isOwnerOrAdmin(tenantId));
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() &&
+          (resource.data.userId == request.auth.uid || isOwnerOrAdmin(tenantId));
+        allow delete: if isOwnerOrAdmin(tenantId);
+      }
+
+      // ─── Reviews ────────────────────────────────────────────────────────
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow delete: if isOwnerOrAdmin(tenantId);
+      }
+    }
+  }
+}

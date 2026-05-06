@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // All tenant assets — covers logos, banners, resources, inventories, etc.
+    match /tenants/{tenantId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidImage();
+    }
+
+    // User avatars
+    match /users/{userId}/avatar/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId && isValidImage();
+    }
+
+    // Booking attachments
+    match /bookings/{bookingId}/notes/{logFile} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() &&
+                   request.resource.contentType.matches('text/.*') &&
+                   request.resource.size < 5 * 1024 * 1024;
+    }
+  }
+}

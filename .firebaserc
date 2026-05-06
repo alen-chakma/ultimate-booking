@@ -1,0 +1,10 @@
+{
+  "projects": {
+    "default": "demo-ultimate-booking",
+    "dev": "demo-ultimate-booking",
+    "staging": "ultimate-booking-staging",
+    "prod": "jidoka-pixels"
+  },
+  "targets": {},
+  "etags": {}
+}
