@@ -1,4 +1,4 @@
-name: Deploy to Firebase (Production)
+name: Deploy to Firebase
 
 on:
   push:
@@ -22,6 +22,9 @@ jobs:
 
       - name: Install functions dependencies
         run: npm --prefix functions ci
+
+      - name: Lint
+        run: npm run lint
 
       # Public vars — baked into Next.js bundle at build time
       - name: Write .env.production
@@ -48,8 +51,7 @@ jobs:
           EOF
           sed -i 's/^[[:space:]]*//' .env.production
 
-      # Server-side vars — Firebase Web Frameworks reads .env.jidoka-pixels at runtime
-      # for the project alias, falls back to .env.prod if alias file not found
+      # Server-side vars — Firebase Web Frameworks reads .env.prod at SSR runtime
       - name: Write .env.prod (SSR function runtime)
         env:
           FIREBASE_ADMIN_PROJECT_ID: ${{ secrets.FIREBASE_ADMIN_PROJECT_ID }}
@@ -69,14 +71,13 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Enable Web Frameworks experiment
         run: npx firebase-tools experiments:enable webframeworks
 
-      # Deploys: hosting (Next.js SSR) + Cloud Functions + Firestore rules + Storage rules
       - name: Deploy to Firebase
-        run: npx firebase-tools deploy --project jidoka-pixels --non-interactive
+        run: npx firebase-tools deploy --project ${{ secrets.FIREBASE_PROJECT_ID }} --non-interactive
         env:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
