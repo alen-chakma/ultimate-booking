@@ -20,13 +20,18 @@ const singleSchema = z.object({
   rushHourCharge: z.coerce.number().min(0),
 });
 
-const bulkSchema = z.object({
-  serviceId: z.string().min(1, "Service required"),
-  fromDate: z.string().min(1, "Start date required"),
-  toDate: z.string().min(1, "End date required"),
-  slotTime: z.string().min(1, "Slot time required"),
-  rushHourCharge: z.coerce.number().min(0),
-});
+const bulkSchema = z
+  .object({
+    serviceId: z.string().min(1, "Service required"),
+    fromDate: z.string().min(1, "Start date required"),
+    toDate: z.string().min(1, "End date required"),
+    slotTime: z.string().min(1, "Slot time required"),
+    rushHourCharge: z.coerce.number().min(0),
+  })
+  .refine((d) => d.toDate >= d.fromDate, {
+    message: "End date must be on or after start date",
+    path: ["toDate"],
+  });
 
 type SingleForm = z.infer<typeof singleSchema>;
 type BulkForm = z.infer<typeof bulkSchema>;
@@ -119,6 +124,7 @@ export function ServiceSlotForm({
     if (!selectedService) return;
     const from = parseISO(data.fromDate);
     const to = parseISO(data.toDate);
+    if (to < from) return;
     const allDays = eachDayOfInterval({ start: from, end: to });
     const slots: SlotPayload[] = allDays
       .filter((d) => selectedDays.includes(d.getDay()))

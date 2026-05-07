@@ -1,0 +1,19 @@
+{
+  "name": "tenants/CiqTQL2wFQFNBKMBG3oK/services/new/full_1778070989382_egg_pork_burger.jpg",
+  "bucket": "demo-ultimate-booking.appspot.com",
+  "metageneration": 1,
+  "generation": 1778070989916,
+  "contentType": "image/webp",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "8b21aa26-6264-42d9-ac00-c3f5c4470785"
+  ],
+  "etag": "+agPi3XpuVKTrV4N0p/dC+whtlw",
+  "customMetadata": {},
+  "timeCreated": "2026-05-06T12:36:29.916Z",
+  "updated": "2026-05-06T12:36:29.916Z",
+  "size": 73770,
+  "md5Hash": "b9n8vHURpIb/Ao9pbaQ5tw==",
+  "crc32c": "2544830951"
+}

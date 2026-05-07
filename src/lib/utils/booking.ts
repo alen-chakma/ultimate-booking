@@ -1,5 +1,5 @@
-import { addMinutes, format, isSameDay, isWithinInterval } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { addMinutes, format, isValid, isWithinInterval } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import type { Service, ServiceSlot, Resource, SelectedInventory, Inventory } from "@/types";
 
 export function calculateBookingTotal(
@@ -25,12 +25,25 @@ export function getRemainingCapacity(slot: ServiceSlot): number {
 }
 
 export function formatSlotTime(slot: ServiceSlot, timezone = "UTC"): string {
-  const start = toZonedTime(slot.startTime.toDate(), timezone);
-  const end = toZonedTime(slot.endTime.toDate(), timezone);
-  if (isSameDay(start, end)) {
-    return `${format(start, "EEE, MMM d")} · ${format(start, "h:mm a")} – ${format(end, "h:mm a")}`;
+  const startRaw = slot.startTime.toDate();
+  const endRaw = slot.endTime.toDate();
+  if (!isValid(startRaw) || !isValid(endRaw)) return "—";
+  // Fall back to UTC if the tenant timezone string is unrecognised by the Intl API
+  const tz = (() => {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: timezone });
+      return timezone;
+    } catch {
+      return "UTC";
+    }
+  })();
+  const sameDay =
+    formatInTimeZone(startRaw, tz, "yyyy-MM-dd") ===
+    formatInTimeZone(endRaw, tz, "yyyy-MM-dd");
+  if (sameDay) {
+    return `${formatInTimeZone(startRaw, tz, "EEE, MMM d")} · ${formatInTimeZone(startRaw, tz, "h:mm a")} – ${formatInTimeZone(endRaw, tz, "h:mm a")}`;
   }
-  return `${format(start, "EEE, MMM d h:mm a")} – ${format(end, "EEE, MMM d h:mm a")}`;
+  return `${formatInTimeZone(startRaw, tz, "EEE, MMM d h:mm a")} – ${formatInTimeZone(endRaw, tz, "EEE, MMM d h:mm a")}`;
 }
 
 export function formatBookingDuration(minutes: number): string {

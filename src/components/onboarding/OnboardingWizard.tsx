@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import toast from "react-hot-toast";
@@ -15,6 +15,7 @@ import { ThemeStep } from "./steps/ThemeStep";
 import { ReviewStep } from "./steps/ReviewStep";
 
 const STEPS = ["Business Info", "Location", "Branding", "Review"];
+const DRAFT_KEY = "onboarding_draft";
 
 export function OnboardingWizard() {
   const router = useRouter();
@@ -32,6 +33,21 @@ export function OnboardingWizard() {
     },
   });
 
+  // Restore draft saved before login redirect and jump to Review
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      setFormData(JSON.parse(raw));
+      setStep(STEPS.length - 1);
+    } catch {
+      // ignore corrupt draft
+    } finally {
+      sessionStorage.removeItem(DRAFT_KEY);
+    }
+  }, [firebaseUser]);
+
   const updateData = (data: Partial<OnboardingFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
@@ -40,7 +56,11 @@ export function OnboardingWizard() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const submit = async () => {
-    if (!firebaseUser) return;
+    if (!firebaseUser) {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+      router.push("/login?redirect=/onboarding");
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch("/api/tenants", {

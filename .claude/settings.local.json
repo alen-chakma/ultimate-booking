@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const src = require\\('fs'\\).readFileSync\\('node_modules/date-fns-tz/dist/cjs/formatInTimeZone/index.js','utf8'\\); console.log\\(src\\)\")"
+    ]
+  }
+}

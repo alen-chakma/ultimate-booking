@@ -330,7 +330,7 @@ export default function BusinessPage({ params }: Props) {
                   {tenant.address.zip}, {tenant.address.country}
                 </p>
               )}
-              <div className="h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+              <div className="isolate h-72 w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
                 <MapLocationPicker
                   lat={tenant.address.geo.lat}
                   lng={tenant.address.geo.lng}

@@ -20,6 +20,8 @@ build/
 .env.staging
 # Local secrets reference — never commit
 GITHUB_SECRETS.txt
+service-account.json
+.env.jidoka-pixels
 
 # Firebase emulator data
 emulator-data/

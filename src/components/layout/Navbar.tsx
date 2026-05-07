@@ -182,7 +182,7 @@ export function Navbar({
                 Sign out
               </Button>
             ) : (
-              <Link href="/login" onClick={() => setMenuOpen(false)}>
+              <Link href={loginHref} onClick={() => setMenuOpen(false)}>
                 <Button size="sm" className="w-full">
                   Sign in
                 </Button>
